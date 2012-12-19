@@ -1,0 +1,83 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0a2d43" >
+	
+    <RelativeLayout
+		android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:paddingBottom="20dp"
+	    android:orientation="vertical" >
+
+    	<TextView 
+			android:id="@+id/sleepillow"
+			android:layout_width="match_parent"
+		    android:layout_height="wrap_content"
+		    android:background="#ececec"
+		    android:layout_alignParentLeft="true"
+		    android:layout_alignParentRight="true"
+		    android:textSize="40dp"
+		    android:gravity="center"
+		    android:paddingTop="5dp"
+		    android:paddingBottom="5dp"
+		    android:text="SLEEPILLOW"
+		    android:textColor="#092a3f" />
+    			
+	    <Button
+	    	android:id="@+id/reveilBtn"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_marginLeft="20dp"
+	        android:layout_marginRight="20dp"
+	        android:layout_marginTop="30dp"
+	        android:layout_centerHorizontal="true"
+	        android:layout_below="@+id/sleepillow"
+	        android:background="@drawable/selector_button_01" />
+	
+	    <Button
+	    	android:id="@+id/dormirBtn"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="20dp"
+	        android:layout_alignLeft="@+id/reveilBtn"
+	        android:layout_alignRight="@+id/reveilBtn"
+	        android:layout_centerHorizontal="true"
+	        android:layout_below="@+id/reveilBtn"
+	        android:background="@drawable/selector_button_02" />
+	    
+	    <Button
+	    	android:id="@+id/statsBtn"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="20dp"
+	        android:layout_alignLeft="@+id/reveilBtn"
+	        android:layout_alignRight="@+id/reveilBtn"
+	        android:layout_centerHorizontal="true"
+	        android:layout_below="@+id/dormirBtn"
+	        android:background="@drawable/selector_button_03" />
+	        
+	    <Button
+	    	android:id="@+id/enregistrerBtn"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="20dp"
+	        android:layout_alignLeft="@+id/reveilBtn"
+	        android:layout_alignRight="@+id/reveilBtn"
+	        android:layout_centerHorizontal="true"
+	        android:layout_below="@+id/statsBtn"
+			android:background="@drawable/selector_button_04" />
+	            
+		<Button
+	    	android:id="@+id/coachBtn"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="20dp"
+	        android:layout_alignLeft="@+id/reveilBtn"
+	        android:layout_alignRight="@+id/reveilBtn"
+	        android:layout_centerHorizontal="true"
+	        android:layout_below="@+id/enregistrerBtn"
+	        android:background="@drawable/selector_button_05" />
+		
+	</RelativeLayout>
+</ScrollView>

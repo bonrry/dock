@@ -1,0 +1,100 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0a2d43" >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="20dp" >
+
+        <TextView
+            android:id="@+id/sleepillow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentRight="true"
+            android:background="#ececec"
+            android:gravity="center"
+            android:paddingBottom="5dp"
+            android:paddingTop="5dp"
+            android:text="SLEEPILLOW"
+            android:textColor="#092a3f"
+            android:textSize="40dp" />
+
+        <ImageButton
+            android:id="@+id/dashBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/sleepillow"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:background="#00000000"
+            android:src="@drawable/picto_dashboard" />
+
+        <com.genymobile.sommeil.DigitalClock
+            android:id="@+id/currentTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/sleepillow"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="-30dp"
+            android:layout_marginTop="-40dp"
+            android:textColor="#ececec"
+            android:textSize="140sp" />
+
+        <LinearLayout
+            android:id="@+id/sleepingLightLay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/currentTime"
+            android:gravity="center"
+            android:orientation="horizontal" >
+
+            <ImageView
+                android:id="@+id/pictoStats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="20dp"
+                android:src="@drawable/picto_stats" />
+
+            <ImageView
+                android:id="@+id/pictoAlarme"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="20dp"
+                android:src="@drawable/picto_alarme" />
+
+            <TextView
+                android:id="@+id/textAlarme"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="8:30"
+                android:textColor="#ececec"
+                android:textSize="60sp" />
+        </LinearLayout>
+
+        <com.genymobile.sommeil.customWidget.LevelBarView
+            android:id="@+id/loadBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/sleepingLightLay"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="30dp"
+            android:background="@drawable/load_bar_bg" />
+
+        <Button
+            android:id="@+id/testStatsBtn"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/loadBar"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="30dp"
+            android:background="@drawable/selector_button_03" />
+    </RelativeLayout>
+
+</ScrollView>
