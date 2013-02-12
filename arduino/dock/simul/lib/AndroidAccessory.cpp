@@ -29,8 +29,8 @@
 
 #define PID_SAMSUNG_S3 	0x6860 /* Galaxy S3 - MTP mode */
 #define PID_ADK     	0x2d00 /* ADK */
-#define PID_ADK_2     	0x2d04 /* Other ADK */
-#define PID_ADB      	0x2D01 /* ADB */
+#define PID_ADK_2      	0x2D01 /* Other ADK */
+#define PID_ADB     	0x2d04 /* ADB */
 #define PID_ADB_2      	0x2d05 /* Other ADB */
 #define NB_PID          5
 
@@ -158,21 +158,20 @@ bool AndroidAccessory::findEndpoints(libusb_device_handle *handle)
 	
 	out = 0;
 	in  = 0;
-	libusb_get_active_config_descriptor(libusb_get_device(handle), &cfg);
-	ifdsc = &cfg->interface[0].altsetting[0];
-	for (i = 0; i < ifdsc->bNumEndpoints; i++) {
-		uint8_t ep = ifdsc->endpoint[i].bEndpointAddress;
-		if ((ep & 0x80) && in == 0) { // The one with its bit 0x80 set is IN
-			in = ep;
+	if (0 == libusb_get_active_config_descriptor(libusb_get_device(handle), &cfg)) {
+		ifdsc = &cfg->interface[0].altsetting[0];
+		for (i = 0; i < ifdsc->bNumEndpoints; i++) {
+			uint8_t ep = ifdsc->endpoint[i].bEndpointAddress;
+			if ((ep & 0x80) && (in == 0)) { // The one with its bit 0x80 set is IN
+				in = ep;
+			}
+			if (((ep & 0x80) == 0) && (out == 0)) { // bit 0x80 not set, must be OUT
+				out = ep;
+			}
 		}
-		if (((ep & 0x80) == 0) && out == 0) { // bit 0x80 not set, must be OUT
-			out = ep;
-		}
+		libusb_free_config_descriptor(cfg);
+		fprintf(stderr, "adk configured\n");
 	}
-	//ep_in = ifdsc->endpoint[0].bEndpointAddress;
-	//ep_out = ifdsc->endpoint[1].bEndpointAddress;
-	fprintf(stderr, "adk configured\n");
-
     return in && out;
 }
 
@@ -181,6 +180,7 @@ bool AndroidAccessory::findEndpoints(libusb_device_handle *handle)
  */
 bool AndroidAccessory::isAccessoryDevice(int pid)
 {
+	
 	if ((pid == PID_ADK) || (pid == PID_ADK_2)) {
 		return true;
 	}
@@ -207,7 +207,6 @@ int AndroidAccessory::detectKnownDevice(libusb_device_handle **o_handle) {
 
 bool AndroidAccessory::configureAndroid(void)
 {
-
     int r;
 	int accessory_mode = 0;
 	libusb_device_handle *handle;
@@ -225,10 +224,13 @@ bool AndroidAccessory::configureAndroid(void)
 	// We have a device...
 	libusb_claim_interface(handle, 0);
 	if (accessory_mode == 0) {
+		// It's not in ADK mode, try to switch it
 		if (!switchDevice(handle)) {
 			fprintf(stderr, "failed to switch device to ADK mode\n");
 			return false;
 		}
+		// Switched, reopen it...
+		return configureAndroid();
 	}
 	
 	fprintf(stderr, "found a device in accessory mode\n");

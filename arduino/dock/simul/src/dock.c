@@ -41,7 +41,7 @@ void readMessage() {
 	res = acc.read(m_buf, BUF_SIZE, 1);
 	if (res > 0) {
 		msg = strndup(m_buf, res);
-		fprintf(stderr, "IN msg of %d bytes: %s\n", res, msg);
+		fprintf(stderr, "IN msg of %d bytes: %X %c %X\n", res, msg[0], msg[1], (char)msg[2]);
 		free(msg);
 	}
 }
@@ -53,11 +53,13 @@ void sendMessage() {
 	bzero(msg, BUF_SIZE);
 	msg[0] = '3';
 	msg[1] = 'M';
-	msg[2] = 'z';
+	msg[2] = rand() % 256;
 	r = acc.write(msg, 3);
 	if (r <= 0) {
 		fprintf(stderr, "Failed writing: r=%d\n", r);
-	}	
+	} else {
+		fprintf(stderr, "sent!\n");
+	}
 }
 
 void loop() {
@@ -65,13 +67,10 @@ void loop() {
 	int	i = 0;
 
 	if (acc.isConnected()) {
-		fprintf(stderr, "begin read\n");
 		readMessage(); // read timeout induce delay here...
-		fprintf(stderr, "end read\n");
 
 		if (timer % 10000) {
 			sendMessage();
-			fprintf(stderr, "sent!\n");
 		}
 	} else {
 		// Not connected...
