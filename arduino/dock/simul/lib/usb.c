@@ -27,6 +27,7 @@
 #include <errno.h>
 
 #include "usb.h"
+
 /*
 #define IN 0x85
 #define OUT 0x07
@@ -271,29 +272,12 @@ static uint8_t ep_in = 0, ep_out = 0;
 
 #define TIMEOUT 1
 
-int __adk_send_string(libusb_device_handle *handle, int index, const char *s)
-{
-	int r;
-
-	r = libusb_control_transfer(handle,
-									LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR |
-									LIBUSB_RECIPIENT_DEVICE, ADK_COMMAND_SENDSTRING, 0, index,
-									(void *) s, strlen(s), 0);
-	if (r != strlen(s))
-	{
-		return -EINVAL;
-	}
-	return 0;
-}
-
 int adk_open(uint16_t vid, uint16_t pid)
 {
 	int						r;
 	int 					i;
 	int 					accessory_mode = 1;
 	libusb_device_handle 	*handle;
-	struct libusb_config_descriptor 		*cfg = NULL;
-	struct libusb_interface_descriptor 	*ifdsc = NULL;
 
 	libusb_init(NULL);
 
@@ -319,94 +303,14 @@ int adk_open(uint16_t vid, uint16_t pid)
 
 	if (accessory_mode == 0)
 	{
-		/* try to switch to the accessory mode */
-		uint16_t version;
-		r = libusb_control_transfer(handle,
-										LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR |
-										LIBUSB_RECIPIENT_DEVICE, ADK_COMMAND_GETPROTOCOL, 0, 0,
-										(void *) &version, sizeof(version), 0);
-
-		if (r != sizeof(version) || le32toh(version) != 2)
-		{
-			fprintf(stderr, "GetProtocol command is not supported : %d\n", version);
-			return -ENOTSUP;
-		}
-		fprintf(stderr, "found device, ADK version is %d\n", le32toh(version));
-
-		/* send strings */
-		r = __adk_send_string(handle, ADK_STRING_MANUFACTURER, ACCESSORY_STRING_VENDOR);
-		if (r < 0)
-		{
-			fprintf(stderr, "failed to send manufacturer string: %d\n", r);
-			return r;
-		}
-		r = __adk_send_string(handle, ADK_STRING_MODEL, ACCESSORY_STRING_NAME);
-		if (r < 0) {
-						fprintf(stderr, "failed to send model string: %d\n", r);
-						return r;
-		}
-		r = __adk_send_string(handle, ADK_STRING_DESCRIPTION, ACCESSORY_STRING_LONGNAME);
-		if (r < 0) {
-						fprintf(stderr, "failed to send description string: %d\n", r);
-						return r;
-		}
-		r = __adk_send_string(handle, ADK_STRING_VERSION, ACCESSORY_STRING_VERSION);
-		if (r < 0) {
-						fprintf(stderr, "failed to send version string: %d\n", r);
-						return r;
-		}
-		r = __adk_send_string(handle, ADK_STRING_URI, ACCESSORY_STRING_URL);
-		if (r < 0) {
-						fprintf(stderr, "failed to send URI string: %d\n", r);
-						return r;
-		}
-		r = __adk_send_string(handle, ADK_STRING_SERIAL, ACCESSORY_STRING_SERIAL);
-		if (r < 0) {
-						fprintf(stderr, "failed to send serial string: %d\n", r);
-						return r;
-		}
-
-		fprintf(stderr, "starting accessory mode\n");
-		r = libusb_control_transfer(handle,
-										LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR |
-										LIBUSB_RECIPIENT_DEVICE, ADK_COMMAND_START, 0, 0, NULL, 0, 0);
-		if (r != 0) {
-						return -EINVAL;
-		}
-
-		libusb_release_interface(handle, 0);
-		libusb_close(handle);
-
-		fprintf(stderr, "started. now re-opening the device\n");
-		/* re-open the device after enumeration */
-		sleep(ADK_REENUMERATION_DELAY);
-		return adk_open(0xffff, 0xffff);
+		switchDevice()
 	}
 	else
 	{
 		fprintf(stderr, "found device in accessory mode\n");
 
 		/* configure accessory */
-
-		r = libusb_get_active_config_descriptor(libusb_get_device(handle), &cfg);
-		ifdsc = &cfg->interface[0].altsetting[0];
-		/*
-		for (i = 0; i < ifdsc->bNumEndpoints; i++)
-		{
-			uint8_t ep = ifdsc->endpoint[i].bEndpointAddress;
-			if ((ep & 0x7f) && ep_in == 0)
-			{
-				ep_in = ep;
-			}
-			if (((ep & 0x7f) == 0) && ep_out == 0)
-			{
-				ep_out = ep;
-			}
-		}
-		*/
-		ep_in = ifdsc->endpoint[0].bEndpointAddress;
-		ep_out = ifdsc->endpoint[1].bEndpointAddress;
-		fprintf(stderr, "adk configured\n");
+		findEndpoint()
 	}
 	adk = handle;
 	return 0;
@@ -414,6 +318,9 @@ int adk_open(uint16_t vid, uint16_t pid)
 
 void adk_close()
 {
+	if (adk != NULL) {
+		libusb_release_interface(adk, 0);
+	}
 	libusb_exit(NULL);
 }
 
