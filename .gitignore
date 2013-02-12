@@ -36,3 +36,6 @@ local.properties
 *.exe
 *.out
 *.app
+
+# MAC OS
+.DS_Store
