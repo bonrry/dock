@@ -48,6 +48,7 @@ private:
     bool switchDevice(libusb_device_handle *handle);
     bool findEndpoints(libusb_device_handle *handle);
     bool configureAndroid(void);
+    int detectKnownDevice(libusb_device_handle **o_handle);
     void disconnect();
 
 public:

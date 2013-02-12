@@ -187,30 +187,39 @@ bool AndroidAccessory::isAccessoryDevice(int pid)
 	return false;
 }
 
-bool AndroidAccessory::configureAndroid(void)
-{
+int AndroidAccessory::detectKnownDevice(libusb_device_handle **o_handle) {
 	int i, j;
-    int r;
-	int accessory_mode = 0;
 	libusb_device_handle *handle;
-	
+
 	// TODO: instead of this dirty stuff, do an universal detection
 	// using libusb_get_device_list(libusb_context *ctx, libusb_device ***list)
 	for (i = 0; i < NB_VID; ++i) {
 		for (j = 0; j < NB_PID; ++j) {
 			handle = libusb_open_device_with_vid_pid(NULL, vid[i], pid[j]);
 			if (handle != NULL) {
-				if (isAccessoryDevice(pid[j])) {
-					// Device was detected with an ADK registered PID
-					accessory_mode = 1;
-				}
-				break;
+				*o_handle = handle;
+				return pid[j];
 			}
 		}
-	}
+	}	
+	return -1;
+}
+
+bool AndroidAccessory::configureAndroid(void)
+{
+
+    int r;
+	int accessory_mode = 0;
+	libusb_device_handle *handle;
+	
+	int pid = detectKnownDevice(&handle);
 	if (handle == NULL) {
 		fprintf(stderr, "no known device detected\n");
 		return false;
+	}
+	if (isAccessoryDevice(pid)) {
+		// Device was detected with an ADK registered PID
+		accessory_mode = 1;
 	}
 	
 	// We have a device...
