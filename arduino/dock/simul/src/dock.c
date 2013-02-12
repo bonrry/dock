@@ -28,6 +28,8 @@ AndroidAccessory acc("telethonSommeil",
 "http://telethon.bemyapp.com/",
 "0000000012345678");
 
+// Timeout on USB read(), in milliseconds
+#define USB_TIMEOUT 200 
 
 int timer = 1;
 
@@ -44,7 +46,9 @@ void readMessage() {
 	int res = 0;
 	char *msg;
 	
-	res = acc.read(m_buf, BUF_SIZE, 1);
+	fprintf(stderr, "read:");
+	res = acc.read(m_buf, BUF_SIZE, USB_TIMEOUT);
+	fprintf(stderr, " done\n");
 	if (res > 0) {
 		msg = strndup(m_buf, res);
 		fprintf(stderr, "IN msg of %d bytes: %X %c %X\n", res, msg[0], msg[1], (char)msg[2]);
@@ -81,7 +85,7 @@ void loop() {
 	} else {
 		// Not connected...
 		fprintf(stderr, "Off\n");
-		usleep(100000);
+		usleep(300000);
 	}
 	timer++;
 }

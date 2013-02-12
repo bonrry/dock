@@ -201,15 +201,15 @@ int AndroidAccessory::detectKnownDevice(libusb_device_handle **o_handle) {
 				return pid[j];
 			}
 		}
-	}	
+	}
 	return -1;
 }
 
 bool AndroidAccessory::configureAndroid(void)
 {
-    int r;
+	int r;
 	int accessory_mode = 0;
-	libusb_device_handle *handle;
+	libusb_device_handle *handle = NULL;
 	
 	int pid = detectKnownDevice(&handle);
 	if (handle == NULL) {
@@ -269,6 +269,10 @@ int AndroidAccessory::read(void *buff, int len, unsigned int timeout)
 {
     int res = 0;
 	error = libusb_bulk_transfer(usb_handle, in, (unsigned char*) buff, len, &res, timeout);
+	if (error == LIBUSB_ERROR_TIMEOUT)
+		return 0;
+	if (error == LIBUSB_ERROR_NO_DEVICE)
+		disconnect();
 	return res;
 }
 
@@ -276,6 +280,8 @@ int AndroidAccessory::write(void *buff, int len)
 {
 	int res = 0;
     error = libusb_bulk_transfer(usb_handle, out, (unsigned char*) buff, len, &res, TIMEOUT);
+	if (error == LIBUSB_ERROR_NO_DEVICE)
+		disconnect();
     return res;
 }
 
