@@ -21,6 +21,7 @@ local.properties
 
 # Object files
 *.o
+*.d
 
 # Libraries
 *.lib
