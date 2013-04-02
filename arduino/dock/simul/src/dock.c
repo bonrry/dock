@@ -89,3 +89,7 @@ void loop() {
 	}
 	timer++;
 }
+
+void quit() {
+	acc.close();
+}

@@ -20,14 +20,19 @@
 #include <string.h>
 #include <stdint.h>
 #include <errno.h>
-#include <iostream>
-using namespace std;
 
 #include "AndroidAccessory.h"
-#include "UsbVendorIds.h"
 
+#define VID_SAMSUNG 0x04E8 /* Samsung */
+#define VID_GOOGLE  0x18D1 /* Google */
+#define NB_VID      2
+
+#define PID_SAMSUNG_S3 	0x6860 /* Galaxy S3 - MTP mode */
 #define PID_ADK     	0x2d00 /* ADK */
-#define PID_ADK_2      	0x2d01 /* Other ADK */
+#define PID_ADK_2      	0x2D01 /* Other ADK */
+#define PID_ADB     	0x2d04 /* ADB */
+#define PID_ADB_2      	0x2d05 /* Other ADB */
+#define NB_PID          5
 
 #define ACCESSORY_STRING_MANUFACTURER   0
 #define ACCESSORY_STRING_MODEL          1
@@ -40,8 +45,12 @@ using namespace std;
 #define ACCESSORY_SEND_STRING           52
 #define ACCESSORY_START                 53
 
-#define ADK_REENUMERATION_DELAY         1
+#define ADK_REENUMERATION_DELAY         2
 #define TIMEOUT                         1
+
+int vid[NB_VID] = { VID_SAMSUNG, VID_GOOGLE };
+
+int pid[NB_PID] = { PID_SAMSUNG_S3, PID_ADK, PID_ADK_2, PID_ADB, PID_ADB_2 };
 
 AndroidAccessory::AndroidAccessory(const char *manufacturer,
                                    const char *model,
@@ -104,12 +113,10 @@ int AndroidAccessory::sendString(libusb_device_handle *handle, int index, const 
 bool AndroidAccessory::switchDevice(libusb_device_handle *handle)
 {
 	int r;
-	libusb_claim_interface(handle, 0);
     int protocol = getProtocol(handle);
 
     if (protocol < 1) {
         fprintf(stderr, "could not read device protocol version\n");
-        libusb_release_interface(handle, 0);
         return false;
     }
 
@@ -133,6 +140,7 @@ bool AndroidAccessory::switchDevice(libusb_device_handle *handle)
 
 	libusb_release_interface(handle, 0);
 	libusb_close(handle);
+
 	// re-open the device after enumeration
 	fprintf(stderr, "started. now re-opening the device\n");
 	sleep(ADK_REENUMERATION_DELAY);
@@ -172,84 +180,29 @@ bool AndroidAccessory::findEndpoints(libusb_device_handle *handle)
  */
 bool AndroidAccessory::isAccessoryDevice(int pid)
 {
+	
 	if ((pid == PID_ADK) || (pid == PID_ADK_2)) {
 		return true;
 	}
 	return false;
 }
 
-void printdev(libusb_device *dev) {
-	libusb_device_descriptor desc;
-	int r = libusb_get_device_descriptor(dev, &desc);
-	if (r < 0) {
-		cout<<"failed to get device descriptor"<<endl;
-		return;
-	}
-	cout<<"Number of possible configurations: "<<(int)desc.bNumConfigurations<<"  ";
-	cout<<"Device Class: "<<(int)desc.bDeviceClass<<"  ";
-	cout<<"VendorID: "<<desc.idVendor<<"  ";
-	cout<<"ProductID: "<<desc.idProduct<<endl;
-	libusb_config_descriptor *config;
-	libusb_get_config_descriptor(dev, 0, &config);
-	cout<<"Interfaces: "<<(int)config->bNumInterfaces<<" ||| ";
-	const libusb_interface *inter;
-	const libusb_interface_descriptor *interdesc;
-	const libusb_endpoint_descriptor *epdesc;
-	for(int i=0; i<(int)config->bNumInterfaces; i++) {
-		inter = &config->interface[i];
-		cout<<"Number of alternate settings: "<<inter->num_altsetting<<" | ";
-		for(int j=0; j<inter->num_altsetting; j++) {
-			interdesc = &inter->altsetting[j];
-			cout<<"Interface Number: "<<(int)interdesc->bInterfaceNumber<<" | ";
-			cout<<"Number of endpoints: "<<(int)interdesc->bNumEndpoints<<" | ";
-			for(int k=0; k<(int)interdesc->bNumEndpoints; k++) {
-				epdesc = &interdesc->endpoint[k];
-				cout<<"Descriptor Type: "<<(int)epdesc->bDescriptorType<<" | ";
-				cout<<"EP Address: "<<(int)epdesc->bEndpointAddress<<" | ";
-			}
-		}
-	}
-	cout<<endl<<endl<<endl;
-	libusb_free_config_descriptor(config);
-}
-
 int AndroidAccessory::detectKnownDevice(libusb_device_handle **o_handle) {
-	int res = -1; // result
+	int i, j;
 	libusb_device_handle *handle;
-	libusb_device_descriptor desc;
 
-	libusb_device **devs; //pointer to pointer of device, used to retrieve a list of devices
-	int r; //for return values
-	ssize_t cnt; //holding number of devices in list
-
-	//libusb_set_debug(NULL, 3); //set verbosity level to 3, as suggested in the documentation
-	cnt = libusb_get_device_list(NULL, &devs); //get the list of devices
-	if(cnt < 0) {
-		cout<<"Get Device Error"<<endl; //there was an error
-	}
-	cout<<cnt<<" Devices in list."<<endl; //print total number of usb devices
-	ssize_t nb_devices, nb_vendors; //for iterating through the list
-	for(nb_devices = 0; nb_devices < cnt; nb_devices++) {
-		libusb_device *dev = devs[nb_devices];
-		int r = libusb_get_device_descriptor(dev, &desc); // Get config descr
-		if (r < 0) {
-			cout<<"failed to get device descriptor"<<endl;
-			continue;
-		}
-		for(nb_vendors = 0; nb_vendors < BUILT_IN_VENDOR_COUNT; nb_vendors++) {
-			if (builtInVendorIds[nb_vendors] == desc.idVendor) {
-				if (0 == libusb_open(dev, o_handle)) {
-					res = desc.idProduct;
-				}
-				printdev(dev); //print specs of this device
-				break;
+	// TODO: instead of this dirty stuff, do an universal detection
+	// using libusb_get_device_list(libusb_context *ctx, libusb_device ***list)
+	for (i = 0; i < NB_VID; ++i) {
+		for (j = 0; j < NB_PID; ++j) {
+			handle = libusb_open_device_with_vid_pid(NULL, vid[i], pid[j]);
+			if (handle != NULL) {
+				*o_handle = handle;
+				return pid[j];
 			}
 		}
-		if (res != -1)
-			break;
 	}
-	libusb_free_device_list(devs, 1); //free the list, unref the devices in it
-	return res;
+	return -1;
 }
 
 bool AndroidAccessory::configureAndroid(void)
@@ -266,11 +219,10 @@ bool AndroidAccessory::configureAndroid(void)
 	if (isAccessoryDevice(pid)) {
 		// Device was detected with an ADK registered PID
 		accessory_mode = 1;
-	} else {
-		fprintf(stderr, "Phone detected with pid=%X\n", pid);
 	}
 	
 	// We have a device...
+	libusb_claim_interface(handle, 0);
 	if (accessory_mode == 0) {
 		// It's not in ADK mode, try to switch it
 		if (!switchDevice(handle)) {
@@ -282,17 +234,15 @@ bool AndroidAccessory::configureAndroid(void)
 	}
 	
 	fprintf(stderr, "found a device in accessory mode\n");
-	libusb_claim_interface(handle, 0);
 	// configure accessory
 	findEndpoints(handle);
 	usb_handle = handle;
     return true;
 }
 
-void AndroidAccessory::disconnect(int errCode) {
+void AndroidAccessory::disconnect() {
 	fprintf(stderr, "disconnect\n");
 	if (usb_handle != NULL) {
-		libusb_release_interface(usb_handle, 0);
 		libusb_close(usb_handle);
 	}
 	usb_handle = NULL;
@@ -300,42 +250,39 @@ void AndroidAccessory::disconnect(int errCode) {
 	connected = false;
 }
 
-bool AndroidAccessory::isConnected(void)
-{
+bool AndroidAccessory::isConnected(void) {
     if (!connected && configureAndroid()) {
         connected = true;
     } else {
     	// Still connected ?
     	if (error == LIBUSB_ERROR_NO_DEVICE) {
 	        if (connected) {
-	            disconnect(LIBUSB_ERROR_NO_DEVICE);
+	            disconnect();
 	        }
     	}
     }
     return connected;
 }
 
-int AndroidAccessory::read(void *buff, int len, unsigned int timeout)
-{
+int AndroidAccessory::read(void *buff, int len, unsigned int timeout) {
     int res = 0;
 	error = libusb_bulk_transfer(usb_handle, in, (unsigned char*) buff, len, &res, timeout);
 	if (error == LIBUSB_ERROR_TIMEOUT)
 		return 0;
 	if (error == LIBUSB_ERROR_NO_DEVICE)
-		disconnect(LIBUSB_ERROR_NO_DEVICE);
-	return 0;
+		disconnect();
+	return res;
 }
 
-int AndroidAccessory::write(void *buff, int len)
-{
+int AndroidAccessory::write(void *buff, int len) {
 	int res = 0;
     error = libusb_bulk_transfer(usb_handle, out, (unsigned char*) buff, len, &res, TIMEOUT);
 	if (error == LIBUSB_ERROR_NO_DEVICE)
-		disconnect(LIBUSB_ERROR_NO_DEVICE);
+		disconnect();
     return res;
 }
 
-void AndroidAccessory::close()
-{
+void AndroidAccessory::close() {
+	disconnect();
 	libusb_exit(NULL);
 }

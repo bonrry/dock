@@ -24,6 +24,7 @@
 	#define le32toh(x) CFSwapInt32LittleToHost(x)
 #endif
 
+
 #include <libusb.h>
 
 class AndroidAccessory {
@@ -50,7 +51,7 @@ private:
     bool findEndpoints(libusb_device_handle *handle);
     bool configureAndroid(void);
     int detectKnownDevice(libusb_device_handle **o_handle);
-    void disconnect();
+    void disconnect(int errCode);
 
 public:
     AndroidAccessory(const char *manufacturer,
@@ -65,7 +66,7 @@ public:
     bool isConnected(void);
     int read(void *buff, int len, unsigned int timeout);
     int write(void *buff, int len);
-    void adk_close();
+    void close();
 
 };
 
