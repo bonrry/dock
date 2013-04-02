@@ -27,19 +27,21 @@ public class AccesoryReadThread implements Runnable {
 		int ret = 0;
 		byte[] buffer = new byte[64];
 
+		Log.d(TAG, "ReadThread starting...");
 		while (ret >= 0) {
 			try {
 				ret = accessoryInput.read(buffer);
 				//Log.d(TAG, "READ("+ret+")="+new String(buffer));
-				Message m = Message.obtain(handler, MainActivity.TYPE_IN_MSG);
+				Message m = Message.obtain(handler, UsbService.TYPE_IN_MSG);
 				m.obj = new InMessage(buffer);
 				handler.sendMessage(m);
 			} catch (IOException e) {
 				Log.d(TAG, "Exception in USB accessory input reading", e);
-				Message m = Message.obtain(handler, MainActivity.TYPE_IO_ERROR_MSG);
+				Message m = Message.obtain(handler, UsbService.TYPE_IO_ERROR_MSG);
 				handler.sendMessage(m);
-				return;
+				break;
 			}
 		}
+		Log.e(TAG, "ReadThread aborting...");
 	}
 }

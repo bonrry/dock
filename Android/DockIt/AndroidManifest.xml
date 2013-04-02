@@ -4,6 +4,8 @@
     android:versionCode="1"
     android:versionName="1.0" >
 
+    <uses-feature android:name="android.hardware.usb.accessory" />
+
     <uses-sdk
         android:minSdkVersion="12"
         android:targetSdkVersion="16" />
@@ -16,10 +18,13 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-        <uses-library android:name="com.android.future.usb.accessory" />
-
         <activity
-            android:name="com.dockit.MainActivity"
+            android:name="com.dockit.ClockActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleInstance" >
+        </activity>
+        <activity
+            android:name="com.dockit.DebugActivity"
             android:label="@string/app_name"
             android:launchMode="singleInstance" >
             <intent-filter>
@@ -35,6 +40,15 @@
                 android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
                 android:resource="@xml/accessory_filter" />
         </activity>
+        <!--
+        <receiver android:name=".UsbBroadcastReceiver" >
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" >
+                </action>
+            </intent-filter>
+        </receiver>
+        -->
+        <service android:name=".UsbService" />
     </application>
 
 </manifest>

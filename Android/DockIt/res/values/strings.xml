@@ -2,7 +2,9 @@
 <resources>
 
     <string name="app_name">DockIt</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="notif_service_connected">DockIt service running</string>
     <string name="menu_settings">Settings</string>
+    <string name="notification_title">DockIt notif title</string>
+    <string name="notification_message">DockIt notif message</string>
 
 </resources>
