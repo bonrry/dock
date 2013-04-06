@@ -21,12 +21,12 @@
 #include "../wrapper/wrapper.h"
 #include "../lib/AndroidAccessory.h"
 
-AndroidAccessory acc("telethonSommeil",
-"telethonSommeil",
-"telethonSommeil",
-"1.0",
-"http://telethon.bemyapp.com/",
-"0000000012345678");
+AndroidAccessory acc("Titi inc.",
+"dockit",
+"Dawn to wake you up happy",
+"0.2",
+"https://plus.google.com/u/0/106874330031036467055",
+"00000000000042");
 
 // Timeout on USB read(), in milliseconds
 #define USB_TIMEOUT 200 
@@ -46,10 +46,10 @@ void readMessage() {
 	int res = 0;
 	char *msg;
 	
-	fprintf(stderr, "read:");
+	//fprintf(stderr, "read:");
 	res = acc.read(m_buf, BUF_SIZE, USB_TIMEOUT);
-	fprintf(stderr, " done\n");
-	if (res > 0) {
+	//fprintf(stderr, " done\n");
+	if (res > 0 && m_buf[1] != 'z') {
 		msg = strndup(m_buf, res);
 		fprintf(stderr, "IN msg of %d bytes: %X %c %X\n", res, msg[0], msg[1], (char)msg[2]);
 		free(msg);
@@ -79,14 +79,16 @@ void loop() {
 	if (acc.isConnected()) {
 		readMessage(); // read timeout induce delay here...
 
-		if (timer % 10000) {
+		//if (timer % 10000)
+		{
 			sendMessage();
 		}
 	} else {
 		// Not connected...
 		fprintf(stderr, "Off\n");
-		usleep(300000);
+		usleep(2000000);
 	}
+	usleep(100000);
 	timer++;
 }
 

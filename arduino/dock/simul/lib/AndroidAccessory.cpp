@@ -26,8 +26,14 @@ using namespace std;
 #include "AndroidAccessory.h"
 #include "UsbVendorIds.h"
 
-#define PID_ADK     	0x2d00 /* ADK */
-#define PID_ADK_2      	0x2d01 /* Other ADK */
+/* Android Open Accessory 1.0: http://source.android.com/tech/accessories/aoap/aoa.html */
+#define PID_AOA     	  0x2d00 /* Supported - AOA only, one interface */
+#define PID_AOA_ADB       0x2d01 /* Supported - AOA on first interface, second is ADB */
+/* AOA 2.0 additions: http://source.android.com/tech/accessories/aoap/aoa2.html */
+#define PID_AUDIO      	  0x2d02 /* Audio mode, not supported by us */
+#define PID_AUDIO_ADB     0x2d03 /* Audio mode, not supported by us */
+#define PID_AOA_AUDIO     0x2d04 /* Supported */
+#define PID_AOA_AUDIO_ADB 0x2d05 /* Supported */
 
 #define ACCESSORY_STRING_MANUFACTURER   0
 #define ACCESSORY_STRING_MODEL          1
@@ -40,7 +46,7 @@ using namespace std;
 #define ACCESSORY_SEND_STRING           52
 #define ACCESSORY_START                 53
 
-#define ADK_REENUMERATION_DELAY         1
+#define AOA_REENUMERATION_DELAY         1
 #define TIMEOUT                         1
 
 AndroidAccessory::AndroidAccessory(const char *manufacturer,
@@ -80,7 +86,7 @@ int AndroidAccessory::getProtocol(libusb_device_handle *handle)
 		fprintf(stderr, "GetProtocol command is not supported : %d\n", version);
 		return -ENOTSUP;
 	}
-	fprintf(stderr, "found device, ADK version is %d\n", le32toh(version));
+	fprintf(stderr, "found device, AOA version is %d\n", le32toh(version));
     return version;
 }
 
@@ -113,7 +119,7 @@ bool AndroidAccessory::switchDevice(libusb_device_handle *handle)
         return false;
     }
 
-	// Send strings to put device in ADK mode
+	// Send strings to put device in AOA mode
     sendString(handle, ACCESSORY_STRING_MANUFACTURER, manufacturer);
     sendString(handle, ACCESSORY_STRING_MODEL, model);
     sendString(handle, ACCESSORY_STRING_DESCRIPTION, description);
@@ -135,7 +141,7 @@ bool AndroidAccessory::switchDevice(libusb_device_handle *handle)
 	libusb_close(handle);
 	// re-open the device after enumeration
 	fprintf(stderr, "started. now re-opening the device\n");
-	sleep(ADK_REENUMERATION_DELAY);
+	sleep(AOA_REENUMERATION_DELAY);
 	return true;
 }
 
@@ -162,18 +168,21 @@ bool AndroidAccessory::findEndpoints(libusb_device_handle *handle)
 			}
 		}
 		libusb_free_config_descriptor(cfg);
-		fprintf(stderr, "adk configured\n");
+		fprintf(stderr, "AOA configured\n");
 	}
     return in && out;
 }
 
 /*
- * Is this a pid identified as an ADK pid ?
+ * Is this a pid identified as an AOA pid ?
  */
 bool AndroidAccessory::isAccessoryDevice(int pid)
 {
-	if ((pid == PID_ADK) || (pid == PID_ADK_2)) {
+	if ((pid == PID_AOA) || (pid == PID_AOA_ADB) || (pid == PID_AOA_AUDIO) || (pid == PID_AOA_AUDIO_ADB)) {
 		return true;
+	}
+	if ((pid == PID_AUDIO) || (pid == PID_AUDIO_ADB)) {
+		fprintf(stderr, "Unsupported mode: PID_AUDIO or PID_AUDIO_ADB\n");
 	}
 	return false;
 }
@@ -264,7 +273,7 @@ bool AndroidAccessory::configureAndroid(void)
 		return false;
 	}
 	if (isAccessoryDevice(pid)) {
-		// Device was detected with an ADK registered PID
+		// Device was detected with an AOA registered PID
 		accessory_mode = 1;
 	} else {
 		fprintf(stderr, "Phone detected with pid=%X\n", pid);
@@ -272,9 +281,9 @@ bool AndroidAccessory::configureAndroid(void)
 	
 	// We have a device...
 	if (accessory_mode == 0) {
-		// It's not in ADK mode, try to switch it
+		// It's not in AOA mode, try to switch it
 		if (!switchDevice(handle)) {
-			fprintf(stderr, "failed to switch device to ADK mode\n");
+			fprintf(stderr, "failed to switch device to AOA mode\n");
 			return false;
 		}
 		// Switched, reopen it...
@@ -282,9 +291,21 @@ bool AndroidAccessory::configureAndroid(void)
 	}
 	
 	fprintf(stderr, "found a device in accessory mode\n");
-	libusb_claim_interface(handle, 0);
 	// configure accessory
-	findEndpoints(handle);
+	if (findEndpoints(handle) == 0) {
+		fprintf(stderr, "failed to get endpoints!\n");
+	}
+	int cfg = 0;
+	libusb_get_configuration(handle, &cfg);
+	if (cfg != 1) {
+		fprintf(stderr, "switch device to configuration 1...");	
+		if (libusb_set_configuration(handle, 1) != 0) {
+			fprintf(stderr, "failed !!!!!\n");		
+		} else {
+			fprintf(stderr, " done!\n");	
+		}
+	}
+	libusb_claim_interface(handle, 0);
 	usb_handle = handle;
     return true;
 }
@@ -304,12 +325,12 @@ bool AndroidAccessory::isConnected(void)
 {
     if (!connected && configureAndroid()) {
         connected = true;
+        usleep(1000000);
     } else {
     	// Still connected ?
-    	if (error == LIBUSB_ERROR_NO_DEVICE) {
-	        if (connected) {
-	            disconnect(LIBUSB_ERROR_NO_DEVICE);
-	        }
+    	if (error != 0 && connected) {
+    		fprintf(stderr, "error = %s\n", libusb_error_name(error));
+	    	disconnect(LIBUSB_ERROR_NO_DEVICE);
     	}
     }
     return connected;
@@ -323,7 +344,7 @@ int AndroidAccessory::read(void *buff, int len, unsigned int timeout)
 		return 0;
 	if (error == LIBUSB_ERROR_NO_DEVICE)
 		disconnect(LIBUSB_ERROR_NO_DEVICE);
-	return 0;
+	return res;
 }
 
 int AndroidAccessory::write(void *buff, int len)
@@ -337,5 +358,8 @@ int AndroidAccessory::write(void *buff, int len)
 
 void AndroidAccessory::close()
 {
+	if (connected) {
+		disconnect(error);
+	}
 	libusb_exit(NULL);
 }
