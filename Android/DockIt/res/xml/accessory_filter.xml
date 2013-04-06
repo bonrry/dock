@@ -14,5 +14,5 @@
      limitations under the License.
 -->
 <resources>
-    <usb-accessory manufacturer="telethonSommeil" model="telethonSommeil" version="1.0" />
+    <usb-accessory manufacturer="Titi inc." model="dockit" version="0.2" />
 </resources>

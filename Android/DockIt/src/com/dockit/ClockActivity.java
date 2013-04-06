@@ -21,13 +21,4 @@ public class ClockActivity extends Activity {
 		setContentView(R.layout.activity_clock);
 	}
 	
-	@Override
-	protected void onResume() {
-		super.onResume();
-		
-		// Start USB service...
-		// FIXME : check that intent is USB_ATTACHED...
-		Intent intent = new Intent(this, UsbService.class);
-	    startService(intent);
-	}
 }

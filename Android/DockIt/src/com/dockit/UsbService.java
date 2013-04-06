@@ -4,6 +4,7 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -14,6 +15,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbManager;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -23,41 +25,48 @@ import android.widget.Toast;
 
 public class UsbService extends Service {
 
+	private final IBinder mBinder = new LocalBinder();
 	private UsbManager usbManager;
 	UsbAccessory accessory;
 	ParcelFileDescriptor accessoryFileDescriptor;
 	FileInputStream accessoryInput;
 	FileOutputStream accessoryOutput;
-	Thread mReadThread;
+	Thread mReadThread = null;
 	Handler messageHandler;
+
+	ArrayList<DataAvailableInterface> listeners = new ArrayList<DataAvailableInterface>();
 
 	public static final int TYPE_IN_MSG       = 1;
 	public static final int TYPE_IO_ERROR_MSG = 2;
-	
+
 	private static final int ONGOING_NOTIFICATION = 424242;
 
 	private static final String TAG = "UsbService";
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		// Show UI
+		Intent uiActivityIntent = new Intent(this, DebugActivity.class);
+		uiActivityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		startActivity(uiActivityIntent);
+
 		// FIXME : todo
 		//handleCommand(intent);
 		Log.d(TAG, "onStartCommand");
 		Toast.makeText(this, "onStartCommand", Toast.LENGTH_SHORT).show();
-		// We want this service to continue running until it is explicitly
-		// stopped, so return sticky.
-		
+
 		// Attach to accessory if one is connected
-		// TODO: verify, docs don't do this simple thing, not sure why?
 		attachAccessoryIfAny();
-		
+
+		// We want this service to continue running until it is explicitly
+		// stopped, so return sticky.		
 		return START_STICKY;
 	}
 
 	@Override
 	public IBinder onBind(Intent intent) {
 		Log.d(TAG, "onbind");
-		return null;
+		return mBinder;
 	}
 
 	@Override
@@ -77,6 +86,7 @@ public class UsbService extends Service {
 		}
 		 */
 		//		this.startThread();
+		attachAccessoryIfAny();
 	}
 
 	@Override
@@ -94,16 +104,16 @@ public class UsbService extends Service {
 					break;
 				case TYPE_IO_ERROR_MSG:
 					Log.i(TAG, "Got message TYPE_IO_ERROR_MSG");
+					closeAccessory();
 					// TODO display error or finish()...
 					break;
 				}
 			}
 		};
 
-		// Register to USB events (attach or detach...)
+		// Register to USB DETACH event (not ATTACHED as it is only sent to activity...)
 		usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
-		IntentFilter filter = new IntentFilter(UsbManager.ACTION_USB_ACCESSORY_ATTACHED);
-		filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
+		IntentFilter filter = new IntentFilter(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
 		registerReceiver(usbBroadcastReceiver, filter);
 	}
 
@@ -114,6 +124,18 @@ public class UsbService extends Service {
 		closeAccessory();
 		super.onDestroy();
 	}
+
+	/**
+	 * Class used for the client Binder.  Because we know this service always
+	 * runs in the same process as its clients, we don't need to deal with IPC.
+	 */
+	public class LocalBinder extends Binder {
+		UsbService getService() {
+			// Return this instance of LocalService so clients can call public methods
+			return UsbService.this;
+		}
+	}
+
 
 	/**
 	 * ************************************************************************
@@ -132,12 +154,7 @@ public class UsbService extends Service {
 	private final BroadcastReceiver usbBroadcastReceiver = new BroadcastReceiver() {
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
-			if (UsbManager.ACTION_USB_ACCESSORY_ATTACHED.equals(action)) {
-				Log.d(TAG, "usbBroadcastReceiver: received ACTION_USB_ACCESSORY_ATTACHED");
-				synchronized (this) {
-					attachAccessoryIfAny();
-				}
-			} else if (UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
+			if (UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
 				Log.d(TAG, "usbBroadcastReceiver: received ACTION_USB_ACCESSORY_DETACHED");
 				closeAccessory();
 			}
@@ -145,6 +162,10 @@ public class UsbService extends Service {
 	};
 
 	private void openAccessory(UsbAccessory accessory) {
+		if (accessoryFileDescriptor != null) {
+			Log.d(TAG, "openAccessory: already opened...");
+			return;
+		}
 		Log.d(TAG, "openAccessory");
 		accessoryFileDescriptor = usbManager.openAccessory(accessory);
 		if (accessoryFileDescriptor != null) {
@@ -152,7 +173,7 @@ public class UsbService extends Service {
 			FileDescriptor fd = accessoryFileDescriptor.getFileDescriptor();
 			accessoryInput = new FileInputStream(fd);
 			accessoryOutput = new FileOutputStream(fd);
-			mReadThread = new Thread(null, new AccesoryReadThread(accessoryInput, messageHandler), "AndroidPCHost");
+			mReadThread = new Thread(null, new AccesoryReadThread(accessoryInput, accessoryOutput, messageHandler), "AndroidPCHost");
 			Log.d(TAG, "openAccessory: accessory opened");
 			mReadThread.start();
 			// TODO: enable USB operations in the app
@@ -166,11 +187,14 @@ public class UsbService extends Service {
 		Log.d(TAG, "closeAccessory");
 		// TODO: disable USB operations in the app
 		try {
-			mReadThread.interrupt();
+			if (mReadThread != null && !mReadThread.isInterrupted())
+				mReadThread.interrupt();
 			if (accessoryFileDescriptor != null)
 				accessoryFileDescriptor.close();
 			Log.d(TAG, "closeAccessory: accessory closed");
-		} catch (IOException e) { }
+		} catch (IOException e) {
+			Log.e(TAG, "closeAccessory: "+e);
+		}
 		finally {
 			accessoryFileDescriptor = null;
 			accessory = null;
@@ -178,18 +202,24 @@ public class UsbService extends Service {
 			stopSelf(); // Will actually stop AFTER all clients unbind... 
 		}
 	}
-	
+
 	private Notification getNotification() {
 		Notification notification = new Notification(R.drawable.ic_launcher, getText(R.string.notif_service_connected),
-		        System.currentTimeMillis());
-		Intent notificationIntent = new Intent(this, ClockActivity.class);
+				System.currentTimeMillis());
+		Intent notificationIntent = new Intent(this, DebugActivity.class);
 		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 		notification.setLatestEventInfo(this, getText(R.string.notification_title),
-		        getText(R.string.notification_message), pendingIntent);
+				getText(R.string.notification_message), pendingIntent);
 		return notification;
 	}
 
-	protected void sendMessage(final byte[] buf, final int len) {
+	/**
+	 * ************************************************************************
+	 * 						Available to activities:
+	 * ************************************************************************
+	 */
+
+	public void sendMessage(final byte[] buf, final int len) {
 		Thread writeThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -197,18 +227,26 @@ public class UsbService extends Service {
 					accessoryOutput.write(buf, 0, len);
 				} catch (IOException e) {
 					Log.d(TAG, "Exception in USB accessory input writing", e);
+					closeAccessory();
 				}
 			}
 		});
 		writeThread.start();
 	}
 
-	// TODO: parse message, store values...
+	public void listenForData(DataAvailableInterface listener) {
+		if (!listeners.contains(listener))
+			listeners.add(listener);
+	}
+
 	protected void parseMessage(InMessage m) {
-		Log.v(TAG, "MSG received:" + new String(m.buf));
+		Log.v(TAG, "MSG received:" + new String(m.buf, 1, m.buf[0]));
 		if (m.buf[0] > 0 && m.buf[1] == 'M') {
 			//...
-			
+			// TODO: parse message, store values...
+		}
+		for (DataAvailableInterface listener : listeners) {
+			listener.newData(m);
 		}
 	}
 }
