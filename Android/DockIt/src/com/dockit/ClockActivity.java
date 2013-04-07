@@ -1,10 +1,8 @@
 package com.dockit;
 
-import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 
-public class ClockActivity extends Activity {
+public class ClockActivity extends UsbActivity {
 
 	String TAG = "ClockActivity";
 
@@ -21,4 +19,8 @@ public class ClockActivity extends Activity {
 		setContentView(R.layout.activity_clock);
 	}
 	
+	@Override
+	public void newData(InMessage m) {
+		// FIXME TODO
+	}
 }
