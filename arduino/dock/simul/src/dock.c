@@ -47,13 +47,15 @@ void readMessage() {
 	char *msg;
 	
 	//fprintf(stderr, "read:");
-	res = acc.read(m_buf, BUF_SIZE, USB_TIMEOUT);
-	//fprintf(stderr, " done\n");
-	if (res > 0 && m_buf[1] != 'z') {
-		msg = strndup(m_buf, res);
-		fprintf(stderr, "IN msg of %d bytes: %X %c %X\n", res, msg[0], msg[1], (char)msg[2]);
-		free(msg);
-	}
+	do {
+		res = acc.read(m_buf, BUF_SIZE, USB_TIMEOUT);
+		//fprintf(stderr, " done\n");
+		if (res > 0 && m_buf[1] != 'z') {
+			msg = strndup(m_buf, res);
+			fprintf(stderr, "IN msg of %d bytes: %X %c %X\n", res, msg[0], msg[1], (char)msg[2]);
+			free(msg);
+		}
+	} while (res > 0);
 }
 
 void sendMessage() {
@@ -61,14 +63,14 @@ void sendMessage() {
 	char 	msg[BUF_SIZE];
 	
 	bzero(msg, BUF_SIZE);
-	msg[0] = '3';
+	msg[0] = '2';
 	msg[1] = 'M';
 	msg[2] = rand() % 256;
 	r = acc.write(msg, 3);
 	if (r <= 0) {
 		fprintf(stderr, "Failed writing: r=%d\n", r);
 	} else {
-		fprintf(stderr, "sent!\n");
+		//fprintf(stderr, "sent!\n");
 	}
 }
 
@@ -88,7 +90,7 @@ void loop() {
 		fprintf(stderr, "Off\n");
 		usleep(2000000);
 	}
-	usleep(100000);
+	usleep(50000);
 	timer++;
 }
 
