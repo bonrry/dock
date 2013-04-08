@@ -10,17 +10,22 @@ CXXFLAGS+=$(IDIR) -g -MMD
 CFLAGS+=$(IDIR) -g -MMD
 LDFLAGS+=-g
 LDLIBS+=
-RM=rm -f
+RM=rm -rf
 
 ODIR=gen
 LDIR=lib
+LIBUSB_DIR=external/libusb/libusbx-1.0.15-rc3
+LIBUSB_INSTALL_DIR=out
+LIBUSB_INSTALL_PATH=$(LIBUSB_DIR)/$(LIBUSB_INSTALL_DIR)
+LIBUSB=$(LIBUSB_INSTALL_PATH)/lib/libusb-1.0.a
 
 # The binary we are building
-BINARY=dockSimulator.app
+BINARY_DIR=out
+BINARY=$(BINARY_DIR)/dockSimulator
 
 # Libraries and includes
-LIBS:=-L/opt/local/lib -lusb-1.0
-IDIR=-I/usr/include/ -I/opt/local/include/libusb-1.0
+LIBS:=-L$(LIBUSB_INSTALL_PATH)/lib -lusb-1.0
+IDIR=-I/usr/include/ -I$(LIBUSB_INSTALL_PATH)/includes
 
 # c and cpp source files
 SRCS_CPP=
@@ -34,14 +39,33 @@ OBJS=$(CPP_OBJS) $(C_OBJS)
 all: $(BINARY)
 
 $(BINARY): $(OBJS)
-	$(CXX) $(LDFLAGS) -o $@ $^ $(CFLAGS) $(LDLIBS) $(LIBS)
-              
+	mkdir -p $(BINARY_DIR) ; \
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDLIBS) $(LIBS)
+
+libusb: $(LIBUSB)
+
+$(LIBUSB):
+	cd $(LIBUSB_DIR) ; \
+	mkdir -p $(LIBUSB_INSTALL_DIR)/lib ; \
+	mkdir -p $(LIBUSB_INSTALL_DIR)/includes ; \
+	./configure ; \
+	$(MAKE) ; \
+	/bin/sh libtool --mode=install /usr/local/bin/ginstall -c libusb/libusb-1.0.la '$(CURDIR)/$(LIBUSB_INSTALL_PATH)/lib' ; \
+	cp libusb/libusb.h $(LIBUSB_INSTALL_DIR)/includes/ ; \
+	cd -
+
 .PHONY: clean
 
 clean:
 	$(RM) $(OBJS) $(OBJS:%.o=%.d) *~ $(LDIR)/*~ .depend
+
+clean-libusb:
+	cd $(LIBUSB_DIR) ; \
+	$(RM) $(LIBUSB_INSTALL_DIR) ; \
+	$(MAKE) clean ; \
+	cd -
 	
 dist-clean: clean
-	$(RM) $(BINARY)
+	$(RM) $(BINARY_DIR)
 
 -include $(OBJS:%.o=%.d)

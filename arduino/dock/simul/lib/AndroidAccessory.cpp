@@ -46,8 +46,8 @@ using namespace std;
 #define ACCESSORY_SEND_STRING           52
 #define ACCESSORY_START                 53
 
-#define AOA_REENUMERATION_DELAY         1
-#define TIMEOUT                         1
+#define AOA_REENUMERATION_DELAY         2  // in seconds
+#define USB_WRITE_TIMEOUT             342 // in milliseconds
 
 AndroidAccessory::AndroidAccessory(const char *manufacturer,
                                    const char *model,
@@ -350,7 +350,7 @@ int AndroidAccessory::read(void *buff, int len, unsigned int timeout)
 int AndroidAccessory::write(void *buff, int len)
 {
 	int res = 0;
-    error = libusb_bulk_transfer(usb_handle, out, (unsigned char*) buff, len, &res, TIMEOUT);
+    error = libusb_bulk_transfer(usb_handle, out, (unsigned char*) buff, len, &res, USB_WRITE_TIMEOUT);
 	if (error == LIBUSB_ERROR_NO_DEVICE)
 		disconnect(LIBUSB_ERROR_NO_DEVICE);
     return res;

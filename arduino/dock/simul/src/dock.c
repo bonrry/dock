@@ -22,14 +22,15 @@
 #include "../lib/AndroidAccessory.h"
 
 AndroidAccessory acc("Titi inc.",
-"dockit",
-"Dawn to wake you up happy",
-"0.2",
-"https://plus.google.com/u/0/106874330031036467055",
-"00000000000042");
+					"dockit",
+					"DawnDowk - to wake you up happy",
+					"0.2",
+					"https://plus.google.com/u/0/106874330031036467055",
+					"00000000000042");
 
-// Timeout on USB read(), in milliseconds
-#define USB_TIMEOUT 200 
+#define USB_READ_TIMEOUT               20 // in milliseconds
+#define SLEEP_DELAY                 30000 // in microseconds
+#define SLEEP_DELAY_NOT_CONNECTED 2000000 // in microseconds
 
 int timer = 1;
 
@@ -48,7 +49,7 @@ void readMessage() {
 	
 	//fprintf(stderr, "read:");
 	do {
-		res = acc.read(m_buf, BUF_SIZE, USB_TIMEOUT);
+		res = acc.read(m_buf, BUF_SIZE, USB_READ_TIMEOUT);
 		//fprintf(stderr, " done\n");
 		if (res > 0 && m_buf[1] != 'z') {
 			msg = strndup(m_buf, res);
@@ -88,9 +89,9 @@ void loop() {
 	} else {
 		// Not connected...
 		fprintf(stderr, "Off\n");
-		usleep(2000000);
+		usleep(SLEEP_DELAY_NOT_CONNECTED);
 	}
-	usleep(50000);
+	usleep(SLEEP_DELAY);
 	timer++;
 }
 
