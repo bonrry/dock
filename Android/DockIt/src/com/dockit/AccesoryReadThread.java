@@ -34,19 +34,11 @@ public class AccesoryReadThread implements Runnable {
 	{
 		int ret = 0;
 		byte[] buffer = new byte[BUF_LEN];
-		byte[] ackBuf = new byte[BUF_LEN];
-		ackBuf[0] = ACK_LEN;
-		ackBuf[1] = 'z';
-
+		
 		Log.d(TAG, "ReadThread starting...");
 		while (ret >= 0) {
 			try {
 				ret = accessoryInput.read(buffer);
-				if (ret > 0) {
-					// Ack the message. This is a hack to avoid host PC simulator to block 
-					// on read, when using libusb on MACOSX :-(
-					accessoryOutput.write(ackBuf, 0, BUF_LEN);
-				}
 				//Log.d(TAG, "READ("+ret+")="+new String(buffer));
 				Message m = Message.obtain(handler, UsbService.TYPE_IN_MSG);
 				m.obj = new InMessage(buffer);
