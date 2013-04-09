@@ -32,7 +32,7 @@ public class UsbService extends Service {
 	FileInputStream accessoryInput;
 	FileOutputStream accessoryOutput;
 	Thread mReadThread = null;
-	Handler messageHandler;
+	static Handler messageHandler;
 
 	ArrayList<DataAvailableInterface> listeners = new ArrayList<DataAvailableInterface>();
 
@@ -173,7 +173,7 @@ public class UsbService extends Service {
 			FileDescriptor fd = accessoryFileDescriptor.getFileDescriptor();
 			accessoryInput = new FileInputStream(fd);
 			accessoryOutput = new FileOutputStream(fd);
-			mReadThread = new Thread(null, new AccesoryReadThread(accessoryInput, accessoryOutput, messageHandler), "AndroidPCHost");
+			mReadThread = new Thread(null, new AccesoryReadThread(accessoryInput, messageHandler), "AndroidPCHost");
 			Log.d(TAG, "openAccessory: accessory opened");
 			mReadThread.start();
 			// TODO: enable USB operations in the app
@@ -238,15 +238,22 @@ public class UsbService extends Service {
 		if (!listeners.contains(listener))
 			listeners.add(listener);
 	}
+	
+	public void unlistenForData(DataAvailableInterface listener) {
+		if (listeners.contains(listener))
+			listeners.remove(listener);
+	}
 
 	protected void parseMessage(InMessage m) {
-		Log.v(TAG, "MSG received:" + new String(m.buf, 1, m.buf[0]));
-		if (m.buf[0] > 0 && m.buf[1] == 'M') {
-			//...
-			// TODO: parse message, store values...
-		}
-		for (DataAvailableInterface listener : listeners) {
-			listener.newData(m);
+		if (m.len >= 0) {
+			Log.v(TAG, "MSG received: (len: " + m.len + "), Command: " + m.command + " - Data: " + ((m.len > 0) ? new String(m.buf, 0, m.len) : "null"));
+			if (m.len > 0 && m.command == 'M') {
+				//...
+				// TODO: parse message, store values...
+			}
+			for (DataAvailableInterface listener : listeners) {
+				listener.newData(m);
+			}			
 		}
 	}
 }

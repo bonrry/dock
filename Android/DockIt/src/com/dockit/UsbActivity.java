@@ -67,6 +67,7 @@ public abstract class UsbActivity extends Activity implements DataAvailableInter
 		super.onStop();
 		// Unbind from the service
 		if (mBound) {
+			mService.unlistenForData(UsbActivity.this);
 			unbindService(mConnection);
 			mBound = false;
 		}

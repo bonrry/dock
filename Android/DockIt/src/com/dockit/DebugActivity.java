@@ -27,7 +27,7 @@ public class DebugActivity extends UsbActivity {
 				msg[0] = 2;
 				msg[1] = 'L';
 				msg[2] = val;
-				sendMessage(msg, 64);
+				sendMessage(msg, 2);
 			}
 		});
 		mTxtSensorValue = (TextView) findViewById(R.id.txtSensorValue);
@@ -41,8 +41,8 @@ public class DebugActivity extends UsbActivity {
 	
 	@Override
 	public void newData(InMessage m) {
-		if (m.buf[0] > 0 && m.buf[1] == 'M') {
-			mTxtSensorValue.setText(""+m.buf[2]);
+		if (m.len > 0 && m.command == 'M') {
+			mTxtSensorValue.setText(""+m.buf[0]);
 		}
 	}
 }
