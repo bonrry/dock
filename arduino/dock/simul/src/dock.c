@@ -23,7 +23,7 @@
 
 AndroidAccessory acc("Titi inc.",
 					"dockit",
-					"DawnDowk - to wake you up happy",
+					"DawnDock - to wake you up happy",
 					"0.2",
 					"https://plus.google.com/u/0/106874330031036467055",
 					"00000000000042");
@@ -38,10 +38,9 @@ void setup() {
 	acc.powerOn();
 }
 
-#define BUF_SIZE 64
-int m_type = 0;
-int m_len = 0;
-char m_buf[BUF_SIZE];
+#define BUF_SIZE 512
+char in_buf[BUF_SIZE];
+char out_buf[BUF_SIZE];
 
 void readMessage() {
 	int res = 0;
@@ -49,25 +48,31 @@ void readMessage() {
 	
 	//fprintf(stderr, "read:");
 	do {
-		res = acc.read(m_buf, BUF_SIZE, USB_READ_TIMEOUT);
+		res = acc.read(in_buf, BUF_SIZE, USB_READ_TIMEOUT);
 		//fprintf(stderr, " done\n");
-		if (res > 0 && m_buf[1] != 'z') {
-			msg = strndup(m_buf, res);
+		if (res > 0 && in_buf[1] != 'z') {
+			msg = strndup(in_buf, res);
 			fprintf(stderr, "IN msg of %d bytes: %X %c %X\n", res, msg[0], msg[1], (char)msg[2]);
 			free(msg);
 		}
 	} while (res > 0);
 }
 
-void sendMessage() {
-	int 	r = 0;
-	char 	msg[BUF_SIZE];
+void sendMessage(char command, char *data, int len) {
+	int r = 0;
+	int i = 0;
 	
-	bzero(msg, BUF_SIZE);
-	msg[0] = '2';
-	msg[1] = 'M';
-	msg[2] = rand() % 256;
-	r = acc.write(msg, 3);
+	if (len > BUF_SIZE - 2) {
+		fprintf(stderr, "Failed writing: TOO MUCH DATA! FIXME, split it !\n", r);
+		return;	
+	}
+	bzero(out_buf, BUF_SIZE);
+	out_buf[0] = len + 1;
+	out_buf[1] = command;
+	for (i = 0; i < len; ++i) {
+		out_buf[2 + i] = data[i];	
+	}
+	r = acc.write(out_buf, len + 2);
 	if (r <= 0) {
 		fprintf(stderr, "Failed writing: r=%d\n", r);
 	} else {
@@ -78,13 +83,15 @@ void sendMessage() {
 void loop() {
 	int r = 0;
 	int	i = 0;
+	char random_data;
 
 	if (acc.isConnected()) {
 		readMessage(); // read timeout induce delay here...
 
 		//if (timer % 10000)
 		{
-			sendMessage();
+			random_data = rand() % 256;
+			sendMessage('M', &random_data, 1);
 		}
 	} else {
 		// Not connected...
