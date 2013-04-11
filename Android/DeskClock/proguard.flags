@@ -1,0 +1,10 @@
+-keepclassmembers class com.dockit.deskclock.DeskClock {
+  *** clockButtonsOnClick(...);
+}
+-keep class com.dockit.deskclock.timer.TimerListItem {
+  *** setAnimatedHeight(...);
+}
+
+-keep class com.dockit.deskclock.widget.multiwaveview.* {
+  *;
+}
