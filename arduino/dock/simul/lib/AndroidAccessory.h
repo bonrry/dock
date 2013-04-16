@@ -18,7 +18,7 @@
 #ifndef __AndroidAccessory_h__
 #define __AndroidAccessory_h__
 
-#if 1 // defined(HAVE_COREFOUNDATION_COREFOUNDATION_H)
+#ifdef __APPLE__ // defined(HAVE_COREFOUNDATION_COREFOUNDATION_H)
 	#include <CoreFoundation/CoreFoundation.h>
 	#define htole32(x) CFSwapInt32HostToLittle(x)
 	#define le32toh(x) CFSwapInt32LittleToHost(x)
