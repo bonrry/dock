@@ -12,6 +12,12 @@ LDFLAGS+=-g
 LDLIBS+=
 RM=rm -rf
 
+UTIL_INSTALL=install
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+UTIL_INSTALL=/usr/local/bin/ginstall
+endif
+
 ODIR=gen
 LDIR=lib
 LIBUSB_DIR=external/libusb/libusbx-1.0.15-rc3
@@ -50,7 +56,7 @@ $(LIBUSB):
 	mkdir -p $(LIBUSB_INSTALL_DIR)/includes ; \
 	./configure ; \
 	$(MAKE) ; \
-	/bin/sh libtool --mode=install /usr/local/bin/ginstall -c libusb/libusb-1.0.la '$(CURDIR)/$(LIBUSB_INSTALL_PATH)/lib' ; \
+	/bin/bash libtool --mode=install $(UTIL_INSTALL) -c libusb/libusb-1.0.la '$(CURDIR)/$(LIBUSB_INSTALL_PATH)/lib' ; \
 	cp libusb/libusb.h $(LIBUSB_INSTALL_DIR)/includes/ ; \
 	cd -
 

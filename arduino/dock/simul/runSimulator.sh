@@ -2,9 +2,9 @@
 
 ldvarname="LD_LIBRARY_PATH"
 host=`uname`
-if [ $host == "Darwin" ]; then
+if [ "$host"="Darwin" ] ; then
 	ldvarname="DYLD_LIBRARY_PATH"
-elif [ $host == "Linux" ]; then
+elif [ "$host"="Linux" ] ; then
 	ldvarname="LD_LIBRARY_PATH"
 fi
 
