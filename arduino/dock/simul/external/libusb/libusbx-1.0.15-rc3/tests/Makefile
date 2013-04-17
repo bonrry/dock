@@ -96,7 +96,7 @@ AUTOMAKE = ${SHELL} /Users/thdasson/dev/dock/arduino/dock/simul/external/libusb/
 AWK = awk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -g -O2
+CFLAGS = -arch i386
 CPP = gcc -E
 CPPFLAGS = 
 CYGPATH_W = echo

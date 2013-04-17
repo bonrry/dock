@@ -2,9 +2,9 @@
 
 ldvarname="LD_LIBRARY_PATH"
 host=`uname`
-if [ "$host"="Darwin" ] ; then
+if [ $host == "Darwin" ]; then
 	ldvarname="DYLD_LIBRARY_PATH"
-elif [ "$host"="Linux" ] ; then
+elif [ $host == "Linux" ]; then
 	ldvarname="LD_LIBRARY_PATH"
 fi
 
@@ -13,7 +13,7 @@ if [ -f out/dockSimulator ]; then
 	echo "STARTING SIMULATOR ON $host. To quit, press Ctrl+c."
 	echo "====================================================="
 	echo ""
-  	eval "$ldvarname=libusb/libusbx-1.0.15-rc3/out/lib/ out/dockSimulator"
+  	eval "$ldvarname=external/libusb/libusbx-1.0.15-rc3/out/lib/ out/dockSimulator"
 else
 	echo "=====================================================" 
 	echo "    out/dockSimulator binary not found." 

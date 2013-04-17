@@ -18,7 +18,7 @@
     <!-- -->
     <!-- Label shown on launcher icon -->
     <!-- Label for the this application displayed on-screen when this application must be represented to the user. -->
-    <string name="app_label">Clock</string>
+    <string name="app_label">DockIt</string>
 
     <!-- Title for AlarmClock activity -->
     <!-- Label for the Alarms activity displayed on-screen when that activity must be represented to the user. -->
@@ -310,11 +310,11 @@
 
     <!--  ActionBar strings -->
     <!-- Describes the purpose of the tab button which which switches the activity to the Timer page -->
-    <string name="menu_timer">Timer</string>
+    <string name="menu_timer">Alarms</string>
     <!-- Describes the purpose of the tab button which which switches the activity to the Clock page -->
     <string name="menu_clock">Clock</string>
     <!-- Describes the purpose of the tab button which which switches the activity to the Stopwatch page -->
-    <string name="menu_stopwatch">Stopwatch</string>
+    <string name="menu_stopwatch">Monitoring</string>
 
     <!--- Clock view buttons strings-->
     <!-- Describes the purpose of the button to start the activity to add/edit/delete alarms -->

@@ -6,9 +6,9 @@
 ###############################################################
 CXX=g++
 CC=g++
-CXXFLAGS+=$(IDIR) -g -MMD
-CFLAGS+=$(IDIR) -g -MMD
-LDFLAGS+=-g
+CXXFLAGS+=$(IDIR) -g -MMD -m32
+CFLAGS+=$(IDIR) -g -MMD -m32
+LDFLAGS+=-g --32 -m32
 LDLIBS+=
 RM=rm -rf
 

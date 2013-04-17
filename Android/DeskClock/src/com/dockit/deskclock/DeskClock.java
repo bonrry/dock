@@ -16,6 +16,10 @@
 
 package com.dockit.deskclock;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.TimeZone;
+
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
 import android.app.Activity;
@@ -39,18 +43,12 @@ import android.view.View.OnTouchListener;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 
-import com.dockit.deskclock.R;
 import com.dockit.deskclock.stopwatch.StopwatchFragment;
 import com.dockit.deskclock.stopwatch.StopwatchService;
 import com.dockit.deskclock.stopwatch.Stopwatches;
 import com.dockit.deskclock.timer.TimerFragment;
 import com.dockit.deskclock.timer.TimerObj;
 import com.dockit.deskclock.timer.Timers;
-import com.dockit.deskclock.worldclock.CitiesActivity;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.TimeZone;
 
 /**
  * DeskClock clock view for desk docks.
@@ -67,16 +65,16 @@ public class DeskClock extends Activity implements LabelDialogFragment.TimerLabe
     public static final String SELECT_TAB_INTENT_EXTRA = "deskclock.select.tab";
 
     private ActionBar mActionBar;
-    private Tab mTimerTab;
+    private Tab mAlarmsTab;
     private Tab mClockTab;
-    private Tab mStopwatchTab;
+    private Tab mMonitoringTab;
 
     private ViewPager mViewPager;
     private TabsAdapter mTabsAdapter;
 
-    public static final int TIMER_TAB_INDEX = 0;
+    public static final int ALARMS_TAB_INDEX = 0;
     public static final int CLOCK_TAB_INDEX = 1;
-    public static final int STOPWATCH_TAB_INDEX = 2;
+    public static final int MONITORING_TAB_INDEX = 2;
 
     private int mSelectedTab;
 
@@ -112,23 +110,22 @@ public class DeskClock extends Activity implements LabelDialogFragment.TimerLabe
 
     private void createTabs(int selectedIndex) {
         mActionBar = getActionBar();
-
-        mActionBar.setDisplayOptions(0);
         if (mActionBar != null) {
+            mActionBar.setDisplayOptions(0);
             mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-            mTimerTab = mActionBar.newTab();
-            mTimerTab.setIcon(R.drawable.timer_tab);
-            mTimerTab.setContentDescription(R.string.menu_timer);
-            mTabsAdapter.addTab(mTimerTab, TimerFragment.class,TIMER_TAB_INDEX);
+            mAlarmsTab = mActionBar.newTab();
+            mAlarmsTab.setIcon(R.drawable.alarms_tab);
+            mAlarmsTab.setContentDescription(R.string.menu_timer);
+            mTabsAdapter.addTab(mAlarmsTab, AlarmsFragment.class, ALARMS_TAB_INDEX);
 
             mClockTab = mActionBar.newTab();
             mClockTab.setIcon(R.drawable.clock_tab);
             mClockTab.setContentDescription(R.string.menu_clock);
-            mTabsAdapter.addTab(mClockTab, ClockFragment.class,CLOCK_TAB_INDEX);
-            mStopwatchTab = mActionBar.newTab();
-            mStopwatchTab.setIcon(R.drawable.stopwatch_tab);
-            mStopwatchTab.setContentDescription(R.string.menu_stopwatch);
-            mTabsAdapter.addTab(mStopwatchTab, StopwatchFragment.class,STOPWATCH_TAB_INDEX);
+            mTabsAdapter.addTab(mClockTab, ClockFragment.class, CLOCK_TAB_INDEX);
+            mMonitoringTab = mActionBar.newTab();
+            mMonitoringTab.setIcon(R.drawable.stopwatch_tab);
+            mMonitoringTab.setContentDescription(R.string.menu_stopwatch);
+            mTabsAdapter.addTab(mMonitoringTab, StopwatchFragment.class, MONITORING_TAB_INDEX);
             mActionBar.setSelectedNavigationItem(selectedIndex);
             mTabsAdapter.notifySelectedPage(selectedIndex);
         }
@@ -200,12 +197,6 @@ public class DeskClock extends Activity implements LabelDialogFragment.TimerLabe
         switch (v.getId()) {
             case R.id.alarms_button:
                 startActivity(new Intent(this, AlarmClock.class));
-                break;
-            case R.id.cities_button:
-                startActivity(new Intent(this, CitiesActivity.class));
-                break;
-            case R.id.menu_button:
-                showMenu(v);
                 break;
             default:
                 break;

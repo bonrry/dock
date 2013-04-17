@@ -61,7 +61,7 @@ import java.util.Comparator;
 public class TimerFragment extends DeskClockFragment
         implements OnClickListener, OnSharedPreferenceChangeListener {
 
-    private static final String TAG = "TimerFragment";
+    private static final String TAG = "AlarmsFragment";
     private static final String KEY_SETUP_SELECTED = "_setup_selected";
     private static final String KEY_ENTRY_STATE = "entry_state";
     private Bundle mViewState = null;
@@ -552,7 +552,7 @@ public class TimerFragment extends DeskClockFragment
 
     @Override
     public void onPageChanged(int page) {
-        if (page == DeskClock.TIMER_TAB_INDEX && mAdapter != null) {
+        if (page == DeskClock.ALARMS_TAB_INDEX && mAdapter != null) {
             mAdapter.sort();
         }
     }

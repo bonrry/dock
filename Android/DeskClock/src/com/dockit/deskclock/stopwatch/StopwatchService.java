@@ -139,7 +139,7 @@ public class StopwatchService extends Service {
             Intent activityIntent = new Intent(getApplicationContext(), DeskClock.class);
             activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             activityIntent.putExtra(
-                    DeskClock.SELECT_TAB_INTENT_EXTRA, DeskClock.STOPWATCH_TAB_INDEX);
+                    DeskClock.SELECT_TAB_INTENT_EXTRA, DeskClock.MONITORING_TAB_INDEX);
             startActivity(activityIntent);
             mLoadApp = false;
         }
@@ -150,7 +150,7 @@ public class StopwatchService extends Service {
         // Intent to load the app for a non-button click.
         Intent intent = new Intent(context, DeskClock.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(DeskClock.SELECT_TAB_INTENT_EXTRA, DeskClock.STOPWATCH_TAB_INDEX);
+        intent.putExtra(DeskClock.SELECT_TAB_INTENT_EXTRA, DeskClock.MONITORING_TAB_INDEX);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent,
                 PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
 

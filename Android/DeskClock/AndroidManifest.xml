@@ -15,7 +15,7 @@
     </uses-sdk>
 
     <application
-        android:icon="@mipmap/ic_launcher_alarmclock"
+        android:icon="@drawable/ic_alarm"
         android:label="@string/app_label" >
         <provider
             android:name="com.dockit.deskclock.AlarmProvider"

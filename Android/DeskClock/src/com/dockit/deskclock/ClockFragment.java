@@ -32,10 +32,8 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.animation.AnimationUtils;
 import android.widget.ListView;
 
-import com.dockit.deskclock.R;
 import com.dockit.deskclock.worldclock.WorldClockAdapter;
 
 /**
@@ -44,11 +42,8 @@ import com.dockit.deskclock.worldclock.WorldClockAdapter;
 
 public class ClockFragment extends DeskClockFragment implements OnSharedPreferenceChangeListener {
 
-    private static final String BUTTONS_HIDDEN_KEY = "buttons_hidden";
     private final static String TAG = "ClockFragment";
-
-    private View mButtons;
-    private boolean mButtonsHidden = false;
+    
     private View mDigitalClock, mAnalogClock, mClockFrame;
     private WorldClockAdapter mAdapter;
     private ListView mList;
@@ -102,10 +97,6 @@ public class ClockFragment extends DeskClockFragment implements OnSharedPreferen
                              Bundle icicle) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.clock_fragment, container, false);
-        mButtons = v.findViewById(R.id.clock_buttons);
-        if (icicle != null) {
-            mButtonsHidden = icicle.getBoolean(BUTTONS_HIDDEN_KEY, false);
-        }
         mList = (ListView)v.findViewById(R.id.cities);
         mList.setDivider(null);
         View headerView = inflater.inflate(R.layout.blank_header_view, mList, false);
@@ -127,7 +118,6 @@ public class ClockFragment extends DeskClockFragment implements OnSharedPreferen
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case (MotionEvent.ACTION_DOWN):
-                        long time = Utils.getTimeNow();
                         mHandler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
@@ -173,8 +163,6 @@ public class ClockFragment extends DeskClockFragment implements OnSharedPreferen
         filter.addAction(Intent.ACTION_LOCALE_CHANGED);
         getActivity().registerReceiver(mIntentReceiver, filter);
 
-        mButtons.setAlpha(mButtonsHidden ? 0 : 1);
-
         // Resume can invoked after changing the cities list or a change in locale
         if (mAdapter != null) {
             mAdapter.loadCitiesDb(getActivity());
@@ -201,23 +189,7 @@ public class ClockFragment extends DeskClockFragment implements OnSharedPreferen
 
     @Override
     public void onSaveInstanceState (Bundle outState) {
-        outState.putBoolean(BUTTONS_HIDDEN_KEY, mButtonsHidden);
         super.onSaveInstanceState(outState);
-    }
-
-    public void showButtons(boolean show) {
-        if (mButtons == null) {
-            return;
-        }
-        if (show && mButtonsHidden) {
-            mButtons.startAnimation(
-                    AnimationUtils.loadAnimation(getActivity(), R.anim.unhide));
-            mButtonsHidden = false;
-        } else if (!show && !mButtonsHidden) {
-            mButtons.startAnimation(
-                    AnimationUtils.loadAnimation(getActivity(), R.anim.hide));
-            mButtonsHidden = true;
-        }
     }
 
     @Override

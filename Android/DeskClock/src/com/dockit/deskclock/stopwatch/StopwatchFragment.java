@@ -380,7 +380,7 @@ public class StopwatchFragment extends DeskClockFragment
 
     @Override
     public void onPageChanged(int page) {
-        if (page == DeskClock.STOPWATCH_TAB_INDEX && mState == Stopwatches.STOPWATCH_RUNNING) {
+        if (page == DeskClock.MONITORING_TAB_INDEX && mState == Stopwatches.STOPWATCH_RUNNING) {
             acquireWakeLock();
         } else {
             releaseWakeLock();
