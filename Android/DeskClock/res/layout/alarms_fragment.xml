@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/clock_background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/blackish_transition" >
+
+    <ImageButton
+        android:id="@+id/alarms_button"
+        style="@style/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/item_background"
+        android:contentDescription="@string/button_alarms"
+        android:onClick="clockButtonsOnClick"
+        android:src="@drawable/ic_lockscreen_alarm" />
+
+</FrameLayout>
