@@ -1,3 +1,6 @@
+# External lib, get it from official depot: https://github.com/mabl/ChibiOS.git
+dock/external/ChibiOS
+
 # built application files
 *.apk
 *.ap_
@@ -41,3 +44,4 @@ local.properties
 
 # MAC OS
 .DS_Store
+*~
