@@ -1,6 +1,11 @@
 # External lib, get it from official depot: https://github.com/mabl/ChibiOS.git
 dock/external/ChibiOS
 
+# C sources in dock/arduino/ are copies of dock/src/
+dock/arduino/dock/*.cpp
+dock/arduino/dock/*.c
+dock/arduino/dock/*.h
+
 # built application files
 *.apk
 *.ap_

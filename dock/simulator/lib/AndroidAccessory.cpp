@@ -86,7 +86,7 @@ int AndroidAccessory::getProtocol(libusb_device_handle *handle)
 		fprintf(stderr, "GetProtocol command is not supported : %d\n", version);
 		return -ENOTSUP;
 	}
-	fprintf(stderr, "found device, AOA version is %d\n", le32toh(version));
+	fprintf(stderr, "Found device with AOA version %d\n", le32toh(version));
     return version;
 }
 
@@ -114,7 +114,7 @@ bool AndroidAccessory::switchDevice(libusb_device_handle *handle)
     int protocol = getProtocol(handle);
 
     if (protocol < 1) {
-        fprintf(stderr, "could not read device protocol version\n");
+        fprintf(stderr, "Could not read device protocol version\n");
         libusb_release_interface(handle, 0);
         return false;
     }
@@ -127,7 +127,7 @@ bool AndroidAccessory::switchDevice(libusb_device_handle *handle)
     sendString(handle, ACCESSORY_STRING_URI, uri);
     sendString(handle, ACCESSORY_STRING_SERIAL, serial);
 
-	fprintf(stderr, "starting accessory mode\n");
+	fprintf(stderr, "Starting accessory mode\n");
 	r = libusb_control_transfer(handle,
 									LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR |
 									LIBUSB_RECIPIENT_DEVICE, ACCESSORY_START, 0, 0, NULL, 0, 0);
@@ -140,7 +140,7 @@ bool AndroidAccessory::switchDevice(libusb_device_handle *handle)
 	libusb_release_interface(handle, 0);
 	libusb_close(handle);
 	// re-open the device after enumeration
-	fprintf(stderr, "started. now re-opening the device\n");
+	fprintf(stderr, "Started, now re-opening the device\n");
 	sleep(AOA_REENUMERATION_DELAY);
 	return true;
 }
@@ -233,17 +233,19 @@ int AndroidAccessory::detectKnownDevice(libusb_device_handle **o_handle) {
 	//libusb_set_debug(NULL, 3); //set verbosity level to 3, as suggested in the documentation
 	cnt = libusb_get_device_list(NULL, &devs); //get the list of devices
 	if(cnt < 0) {
-		cout<<"Get Device Error"<<endl; //there was an error
+		cerr<<"Get Device Error"<<endl; //there was an error
 	}
-	cout<<cnt<<" Devices in list."<<endl; //print total number of usb devices
-	unsigned long nb_devices, nb_vendors; //for iterating through the list
+	//cerr<<cnt<<" Devices in list."<<endl; //print total number of usb devices
+	unsigned long nb_devices, nb_vendors;
+    // Iterate through all the devices
 	for(nb_devices = 0; nb_devices < (unsigned long) cnt; nb_devices++) {
 		libusb_device *dev = devs[nb_devices];
 		r = libusb_get_device_descriptor(dev, &desc); // Get config descr
 		if (r < 0) {
-			cout<<"failed to get device descriptor"<<endl;
+			cerr<<"failed to get device descriptor"<<endl;
 			continue;
 		}
+        // Check if this device is a known Android device (ie appears in the list grabbed from adb source code)
 		for(nb_vendors = 0; nb_vendors < BUILT_IN_VENDOR_COUNT; nb_vendors++) {
 			if (builtInVendorIds[nb_vendors] == desc.idVendor) {
 				if (0 == libusb_open(dev, o_handle)) {
@@ -267,7 +269,7 @@ bool AndroidAccessory::configureAndroid(void)
 	
 	int pid = detectKnownDevice(&handle);
 	if (handle == NULL) {
-		fprintf(stderr, "no known device detected\n");
+		fprintf(stderr, "No device detected. Please plug your phone in...\n");
 		return false;
 	}
 	if (isAccessoryDevice(pid)) {
@@ -288,7 +290,7 @@ bool AndroidAccessory::configureAndroid(void)
 		return configureAndroid();
 	}
 	
-	fprintf(stderr, "found a device in accessory mode\n");
+	fprintf(stderr, "Found a device in accessory mode\n");
 	// configure accessory
 	if (findEndpoints(handle) == 0) {
 		fprintf(stderr, "failed to get endpoints!\n");
@@ -296,7 +298,7 @@ bool AndroidAccessory::configureAndroid(void)
 	int cfg = 0;
 	libusb_get_configuration(handle, &cfg);
 	if (cfg != 1) {
-		fprintf(stderr, "switch device to configuration 1...");	
+		fprintf(stderr, "Switch device to configuration 1...");
 		if (libusb_set_configuration(handle, 1) != 0) {
 			fprintf(stderr, "failed !!!!!\n");		
 		} else {
@@ -309,7 +311,7 @@ bool AndroidAccessory::configureAndroid(void)
 }
 
 void AndroidAccessory::disconnect(int) {
-	fprintf(stderr, "disconnect\n");
+	fprintf(stderr, "Disconnect\n");
 	if (usb_handle != NULL) {
 		libusb_release_interface(usb_handle, 0);
 		libusb_close(usb_handle);

@@ -9,7 +9,9 @@
 #
 # make arduino = Create project for arduino IDE  => TODO !!!!
 #
-# make clean = Clean project files.
+# make clean = Clean tmp project files (.o, gen etc...).
+#
+# make dist-clean = Clean everything !
 #
 # To rebuild project do "make clean" and "make all".
 #
@@ -147,7 +149,7 @@ CPFLAGS += -MD -MP -MF .dep/$(@F).d
 # makefile rules
 #
 
-all: libusb $(OBJS) $(BINARY)
+all: $(BINARY)
 
 # Let make build objects by himself, he knows our system... 
 CXXFLAGS += $(INCDIR) $(CPFLAGS)
@@ -162,9 +164,11 @@ CFLAGS += $(INCDIR) $(CPFLAGS)
 	$(AS) -c $(ASFLAGS) $< -o $@
 
 $(BINARY): libusb $(OBJS)
-	mkdir -p $(BINARY_DIR) ; \
-	$(CXX) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
-
+	-mkdir -p $(BINARY_DIR); \
+	$(CXX) $(OBJS) $(LDFLAGS) $(LIBS) -o $@ ;\
+	cp src/*.h arduino/dock/ ;\
+	cp src/*.cpp arduino/dock/ ; echo $(BINARY)
+	
 gcov:
 	-mkdir gcov
 	$(COV) -u $(subst /,\,$(SRC) $(SRC_CPP))
@@ -184,7 +188,6 @@ $(LIBUSB):
 
 clean: clean-libusb                                 
 	-rm -f $(OBJS)
-	-rm -rf $(BINARY_DIR)
 	-rm -f $(BINARY).map
 	-rm -f $(SRC:.c=.c.bak)
 	-rm -f $(SRC:.c=.lst)
@@ -193,6 +196,10 @@ clean: clean-libusb
 	-rm -f $(ASRC:.s=.s.bak)
 	-rm -f $(ASRC:.s=.lst)
 	-rm -fR .dep
+
+dist-clean: clean
+	-rm -rf $(BINARY_DIR)
+
 
 clean-libusb:
 	cd $(LIBUSB_DIR) ; \

@@ -61,7 +61,7 @@ void readMessage() {
 	do {
 		res = acc.read(in_buf, BUF_SIZE, USB_READ_TIMEOUT);
 		if (res > 0 && in_buf[1] != 'z') {
-                        snprintf(usb_thread_log_buf, BUF_SIZE, "IN msg of %d bytes: %X %c %X\n", res, in_buf[0], in_buf[1], (char)in_buf[2]);
+                        snprintf(usb_thread_log_buf, BUF_SIZE, "[usb] IN msg of %d bytes: %X %c %X\n", res, in_buf[0], in_buf[1], (char)in_buf[2]);
 			LOG(usb_thread_log_buf);
 		}
 	} while (res > 0);
@@ -72,7 +72,7 @@ void sendMessage(char command, char *data, int len) {
 	int i = 0;
 	
 	if (len > BUF_SIZE - 2) {
-		LOG("Failed writing: TOO MUCH DATA! FIXME, split it !\n");
+		LOG("[usb] Failed writing: TOO MUCH DATA! FIXME, split it !\n");
 		return;
 	}
 	memset(out_buf, 0, BUF_SIZE);
@@ -83,7 +83,7 @@ void sendMessage(char command, char *data, int len) {
 	}
 	r = acc.write(out_buf, len + 2);
 	if (r <= 0) {
-		LOG("Failed writing\n");
+		LOG("[usb] Failed writing\n");
 	} else {
 		//fprintf(stderr, "sent!\n");
 	}
@@ -100,7 +100,6 @@ static msg_t Thread1(void *arg) {
             sendMessage('M', &random_data, 1);
         } else {
             // Not connected...
-            LOG("Off\n");
             // Sleep a bit before next scan...
             chThdSleepMilliseconds(SLEEP_DELAY_NOT_CONNECTED);
         }
@@ -121,7 +120,7 @@ static msg_t Thread2(void *arg) {
     // print count every second
     while (1) {
          // Print count for previous second.
-         LOG("Count: ");
+         LOG("[dumb Task] count=");
          snprintf(buf, 10, "%#X\n", count);
          LOG(buf);
          
