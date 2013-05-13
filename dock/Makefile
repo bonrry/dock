@@ -24,7 +24,8 @@ UNAME := $(shell uname)
 
 TRGT = 
 UTIL_INSTALL=install
-CC   = $(TRGT)g++
+CC   = $(TRGT)gcc
+CXX   = $(TRGT)g++
 ifeq ($(UNAME), Darwin)
     CC   = $(TRGT)clang
     CXX  = $(TRGT)clang++
@@ -138,12 +139,15 @@ ifeq ($(UNAME), Darwin)
 	LDFLAGS += -m32 $(OSX_ARCH) $(LIBDIR)
 else
   # Linux, or other
-  CPFLAGS += -Wa,-alms=$(<:.c=.lst)
-  LDFLAGS = --32 -m32 -Wl,-Map=$(BINARY).map,--cref,--no-warn-mismatch $(LIBDIR)
+#  CPFLAGS += -Wa
+  LDFLAGS = -m32 -Wl,-Map=$(BINARY).map,--cref,--no-warn-mismatch $(LIBDIR)
 endif
 
 # Generate dependency information
 CPFLAGS += -MD -MP -MF .dep/$(@F).d
+
+CXXFLAGS += $(INCDIR) $(CPFLAGS)
+CFLAGS += $(INCDIR) $(CPFLAGS) 
 
 #
 # makefile rules
@@ -152,8 +156,6 @@ CPFLAGS += -MD -MP -MF .dep/$(@F).d
 all: $(BINARY)
 
 # Let make build objects by himself, he knows our system... 
-CXXFLAGS += $(INCDIR) $(CPFLAGS)
-CFLAGS += $(INCDIR) $(CPFLAGS) 
 #%.o : %.cpp
 #	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
 #
@@ -164,10 +166,11 @@ CFLAGS += $(INCDIR) $(CPFLAGS)
 	$(AS) -c $(ASFLAGS) $< -o $@
 
 $(BINARY): libusb $(OBJS)
-	-mkdir -p $(BINARY_DIR); \
-	$(CXX) $(OBJS) $(LDFLAGS) $(LIBS) -o $@ ;\
-	cp src/*.h arduino/dock/ ;\
-	cp src/*.cpp arduino/dock/ ; echo $(BINARY)
+	@mkdir -p $(BINARY_DIR); \
+	$(CXX) $(OBJS) $(LDFLAGS) $(LIBS) -o $@ && \
+	cp src/*.h arduino/dock/ && \
+	cp src/*.cpp arduino/dock/ && \
+	echo "Done. Use './runSimulator.sh' to start."
 	
 gcov:
 	-mkdir gcov
@@ -176,17 +179,26 @@ gcov:
 
 libusb: $(LIBUSB)
 
+ifeq ($(UNAME), Darwin)
+  ARCHFLAGS_PRE = CFLAGS="-arch i386" LDFLAGS="-arch i386"
+else
+  # Linux, or other
+  ARCHFLAGS_POST="--host=i386-linux-gnu"
+  ARCHFLAGS_PRE = CFLAGS="-m32" LDFLAGS="-m32"
+
+endif
+
 $(LIBUSB):
 	cd $(LIBUSB_DIR) ; \
-	mkdir -p $(LIBUSB_INSTALL_DIR)/lib ; \
-	mkdir -p $(LIBUSB_INSTALL_DIR)/includes ; \
-	CFLAGS="-arch i386" LDFLAGS="-arch i386" ./configure ; \
-	CFLAGS="-arch i386" LDFLAGS="-arch i386" $(MAKE) ; \
-	/bin/bash libtool --mode=install $(UTIL_INSTALL) -c libusb/libusb-1.0.la '$(CURDIR)/$(LIBUSB_INSTALL_PATH)/lib' ; \
-	cp libusb/libusb.h $(LIBUSB_INSTALL_DIR)/includes/ ; \
+	mkdir -p $(LIBUSB_INSTALL_DIR)/lib && \
+	mkdir -p $(LIBUSB_INSTALL_DIR)/includes && \
+	$(ARCHFLAGS_PRE) ./configure $(ARCHFLAGS_POST) && \
+	$(ARCHFLAGS_PRE) $(MAKE) && \
+	/bin/bash libtool --mode=install $(UTIL_INSTALL) -c libusb/libusb-1.0.la '$(CURDIR)/$(LIBUSB_INSTALL_PATH)/lib' && \
+	cp libusb/libusb.h $(LIBUSB_INSTALL_DIR)/includes/ && \
 	cd -
 
-clean: clean-libusb                                 
+clean:                                  
 	-rm -f $(OBJS)
 	-rm -f $(BINARY).map
 	-rm -f $(SRC:.c=.c.bak)
@@ -197,7 +209,7 @@ clean: clean-libusb
 	-rm -f $(ASRC:.s=.lst)
 	-rm -fR .dep
 
-dist-clean: clean
+dist-clean: clean clean-libusb
 	-rm -rf $(BINARY_DIR)
 
 

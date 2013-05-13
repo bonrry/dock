@@ -3,10 +3,10 @@
 binary="out/dockItSimulator"
 ldvarname="LD_LIBRARY_PATH"
 host=`uname`
-if [ $host == "Darwin" ]; then
+if [ $host = "Darwin" ]; then
 	ldvarname="DYLD_LIBRARY_PATH"
-elif [ $host == "Linux" ]; then
-	ldvarname="LD_LIBRARY_PATH"
+elif [ $host = "Linux" ]; then
+	ldvarname="sudo LD_LIBRARY_PATH"
 fi
 
 if [ -f $binary ]; then
@@ -14,10 +14,14 @@ if [ -f $binary ]; then
 	echo "STARTING SIMULATOR ON $host. To quit, press Ctrl+c."
 	echo "====================================================="
 	echo ""
+	if [ $host = "Linux" ]; then
+	    echo "/!\\ Sudo is required to open usb devices in Linux."
+    	echo ""
+    fi
   	eval "$ldvarname=external/libusb/libusbx-1.0.15-rc3/out/lib/ $binary"
 else
 	echo "=====================================================" 
 	echo "    $binary binary not found." 
-	echo "    To build it, run 'make libusb' and then 'make'" 
+	echo "    To build it, run './getExternal.sh' then run 'make'" 
 	echo "====================================================="
 fi

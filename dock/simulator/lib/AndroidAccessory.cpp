@@ -46,7 +46,7 @@ using namespace std;
 #define ACCESSORY_SEND_STRING           52
 #define ACCESSORY_START                 53
 
-#define AOA_REENUMERATION_DELAY         2  // in seconds
+#define AOA_REENUMERATION_DELAY         1  // in seconds
 #define USB_WRITE_TIMEOUT             342 // in milliseconds
 
 AndroidAccessory::AndroidAccessory(const char *manufacturer,
@@ -194,10 +194,10 @@ void printdev(libusb_device *dev) {
 		cout<<"failed to get device descriptor"<<endl;
 		return;
 	}
-	cout<<"Number of possible configurations: "<<(int)desc.bNumConfigurations<<"  ";
-	cout<<"Device Class: "<<(int)desc.bDeviceClass<<"  ";
 	cout<<"VendorID: "<<desc.idVendor<<"  ";
 	cout<<"ProductID: "<<desc.idProduct<<endl;
+    cout<<"Number of possible configurations: "<<(int)desc.bNumConfigurations<<"  ";
+	cout<<"Device Class: "<<(int)desc.bDeviceClass<<endl;
 	libusb_config_descriptor *config;
 	libusb_get_config_descriptor(dev, 0, &config);
 	cout<<"Interfaces: "<<(int)config->bNumInterfaces<<" ||| ";
@@ -237,19 +237,24 @@ int AndroidAccessory::detectKnownDevice(libusb_device_handle **o_handle) {
 	}
 	//cerr<<cnt<<" Devices in list."<<endl; //print total number of usb devices
 	unsigned long nb_devices, nb_vendors;
-    // Iterate through all the devices
-	for(nb_devices = 0; nb_devices < (unsigned long) cnt; nb_devices++) {
+    // Iterate through all the devices, starting from the end as the devices is probably the last on plugged
+	for(nb_devices = (unsigned long) cnt - 1; nb_devices > 0; nb_devices--) {
 		libusb_device *dev = devs[nb_devices];
 		r = libusb_get_device_descriptor(dev, &desc); // Get config descr
 		if (r < 0) {
 			cerr<<"failed to get device descriptor"<<endl;
 			continue;
 		}
-        // Check if this device is a known Android device (ie appears in the list grabbed from adb source code)
+        // Check if this device is from a known Android device manufacturer (ie appears in the list grabbed from adb source code)
+        // Caution: we will match here some not-android-hardware made by samsung or asus...
+        // That's why we iterate starting from the tail of the usb devices list. Still, it's dirty. Must find a better way to 
+        // recognize android devices...
 		for(nb_vendors = 0; nb_vendors < BUILT_IN_VENDOR_COUNT; nb_vendors++) {
 			if (builtInVendorIds[nb_vendors] == desc.idVendor) {
 				if (0 == libusb_open(dev, o_handle)) {
 					res = desc.idProduct;
+				} else {
+					cerr<<"failed to open this device: ";
 				}
 				printdev(dev); //print specs of this device
 				break;
@@ -287,7 +292,11 @@ bool AndroidAccessory::configureAndroid(void)
 			return false;
 		}
 		// Switched, reopen it...
-		return configureAndroid();
+	    pid = detectKnownDevice(&handle);
+	    if (handle == NULL || !isAccessoryDevice(pid)) {
+		    fprintf(stderr, "Device lost after switch to AOA mode, pid=%d\n", pid);
+		    return false;
+	    }
 	}
 	
 	fprintf(stderr, "Found a device in accessory mode\n");

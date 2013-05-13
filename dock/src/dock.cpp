@@ -6,6 +6,7 @@
 #endif // ARDUINO
 #include <AndroidAccessory.h>
 
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
