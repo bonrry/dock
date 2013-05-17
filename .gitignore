@@ -1,5 +1,5 @@
 # External lib, get it from official depot: https://github.com/mabl/ChibiOS.git
-dock/external/ChibiOS
+#dock/external/ChibiOS
 
 # C sources in dock/arduino/ are copies of dock/src/
 dock/arduino/dock/*.cpp
